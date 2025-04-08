@@ -1,126 +1,117 @@
-# 🧬 openmm_runner
-
-A clean, modular Python-based workflow for running molecular dynamics (MD) simulations using [OpenMM](https://openmm.org/).  
-Includes everything from system preparation to production runs, trajectory alignment, and progress tracking.
+## ⚠️ Caution
+**This workflow does not sanitize protein or ligand structures.**
+Make sure your input files are valid and clean before running simulations.
 
 ---
 
-## 📦 Repository Structure
+# 🧪 openmm_runner
+
+A lightweight, modular Python-based workflow for running molecular dynamics (MD) simulations with [OpenMM](https://openmm.org/). Easily simulate apo or protein-ligand systems, monitor simulation progress, and align trajectories for visualization.
+
+---
+
+## 📁 Directory Structure and Script Roles
 
 ```
 openmm_runner/
 ├── prepare_md.py         # System preparation (solvate, minimize, equilibrate)
 ├── run_md.py             # Production MD (new run or append mode)
-├── align_md.py           # Align and center trajectory using PyTraj
 ├── check_time.py         # Check MD progress, speed, ETA
+├── align_md.py           # Align and center trajectory using PyTraj
 ├── reporter.py           # Reporter config for energy/time logs
 ├── helpers.py            # Log/time parsing utilities
 ├── constants.py          # Default simulation parameters
 ├── system.pdb            # Final equilibrated structure (example)
-├── md.dcd                # Example trajectory
-├── md.pdb                # Final snapshot
-├── md.log                # Energy log
-├── md.time               # Progress log
-├── md.json               # Run config metadata
 ```
+
+### ▶️ Main Execution Scripts
+- `prepare_md.py`: run solvation, minimization, and equilibration
+- `run_md.py`: run or append production MD simulations
+
+### ⚖️ Utility Tools
+- `align_md.py`: align trajectory to a reference PDB using PyTraj
+- `check_time.py`: parse `.time`/`.json` files and show progress, speed, ETA
+
+### 🎓 Support Modules
+- `reporter.py`: preconfigured reporter items for OpenMM
+- `constants.py`: force field and integrator settings
+- `helpers.py`: utility functions for logging, parsing
 
 ---
 
-## 🔧 Requirements
-
-Install all dependencies with Conda:
-
-```bash
-conda create -n openmm python=3.10 -c conda-forge openmm pytraj tqdm numpy
-conda activate openmm
-```
-
----
-
-## 🧪 How to Use
+## 🚀 How to Use
 
 ### 1️⃣ Prepare System
 
 #### Protein-only (apo)
-
 ```bash
 python prepare_md.py -p protein.pdb
 ```
 
 #### Protein-ligand complex
-
 ```bash
 python prepare_md.py -p protein.pdb -l ligand.sdf
 ```
 
-📂 Output files:
+> Ligand file must be `.mol` or `.sdf`.
 
+**Output files:**
 ```
-  - system_initial.pdb
-  - system_solvated.pdb
-  - system_minimized.pdb
-  - system_nvt.log
-  - system_npt.log
-  - system.pdb
-  - system.xml
-  - system.chk
+system_initial.pdb      # unsolvated system
+system_solvated.pdb     # after solvation
+system_minimized.pdb    # after energy minimization
+system_nvt.log          # NVT equilibration
+system_npt.log          # NPT equilibration
+system.pdb              # final coordinates
+system.xml              # serialized OpenMM system
+system.chk              # checkpoint
 ```
 
 ---
 
 ### 2️⃣ Run Production MD
-
 ```bash
 python run_md.py run -p system -o md -t 100
 ```
+- `-t` is simulation time in **nanoseconds**
 
-- `-t` is in nanoseconds
-- Auto-aligns trajectory to `system_solvated.pdb` by default
-
-📂 Output files:
-
+**Output files:**
 ```
-  - md.pdb           # Final coordinates
-  - md.dcd           # Trajectory
-  - md.log           # Energy log
-  - md.time          # Progress log
-  - md.chk           # Checkpoint
-  - md.json          # Config (for append)
+md.dcd              # trajectory
+md.pdb              # final coordinates
+md.chk              # checkpoint
+md.log              # energy log
+md.time             # progress log
+md.json             # run configuration
 ```
 
 ---
 
 ### 3️⃣ Append Simulation
-
 ```bash
-python run_md.py append -p md -o md_extension -t 100
+python run_md.py append -p md -o md2 -t 50
 ```
-
-- Appends 100 ns to `md` simulation
-- Still aligns output trajectory unless disabled
+- `-t` is in **nanoseconds**
+- `-p` and `-o` **must not be the same**
+- The script copies all files from `-p` and appends results to the new set
+- If you want to reuse the old name, **delete the original `.dcd` manually** first
 
 ---
 
-### 4️⃣ Align Trajectory Manually
-
+### 4️⃣ Align Trajectory
 ```bash
 python align_md.py --dcd md.dcd --pdb system_solvated.pdb
 ```
-
-- Aligns trajectory to the reference
-- Autoimages and centers the protein
-- Overwrites original `.dcd` and `.pdb`
+- Wraps and aligns trajectory using protein backbone atoms (`@CA,C,N`)
+- Overwrites the original `.dcd` and `.pdb` files
 
 ---
 
 ### 5️⃣ Check Simulation Progress
-
 ```bash
 python check_time.py md
 ```
-
-🧾 Output example:
-
+Sample output:
 ```
 Progress (ns)       : 0.1 / 0.1 (100%)
 Steps Range (Steps) : 200000 ~ 250000
@@ -132,23 +123,15 @@ Estimated End       : 2025-04-08 14:56:37
 
 ---
 
-## ✅ Features
-
-- Protein-only or protein-ligand system setup
-- Appendable production MD with checkpointing
-- PyTraj-based alignment and centering
-- Config logging and progress tracking
-- Safe overwrite protection and clean interface
+## ✨ Features
+- Run full OpenMM MD simulation with only protein and ligand files, no complex setup
+- Automatically parameterize ligands using **GAFF**
+- Supports **append mode** to continue previous runs
+- Includes tool to **check simulation progress, speed, ETA**
 
 ---
 
 ## 🔗 License
+MIT License. Modify and use freely. Not intended for commercial redistribution.
 
-MIT License.  
-Use, modify, and extend freely for your own MD workflows and research.
 
----
-
-## 💬 Contact
-
-For questions or suggestions, feel free to open an issue or pull request.
