@@ -6,7 +6,6 @@ from openmmforcefields.generators import SystemGenerator
 from openff.toolkit.topology import Molecule
 from tqdm import tqdm
 from pprint import pprint
-from helpers import print_block
 from constants import integrator_config, forcefield_config, system_config
 from reporter import items_energy, items_time
 
@@ -136,6 +135,9 @@ simulation.context.setVelocitiesToTemperature(temp)
 for _ in tqdm(range(100), desc="          NVT"):
     simulation.step(int(time_nvt / (100 * dt.value_in_unit(unit.picoseconds))))
 
+import time  # 파일 상단에서 import 필요
+import datetime  # ETA 포맷용
+
 # ---------------
 # NPT Equilibration
 # ---------------
@@ -159,8 +161,15 @@ simulation.context.setVelocitiesToTemperature(temp)
 # --- Set reporter and run ---
 simulation.reporters.append(StateDataReporter("system_npt.log", 1000, **items_energy))
 
+# --- Timing ---
+start_time = time.time()
+
 for _ in tqdm(range(100), desc="          NPT"):
     simulation.step(int(time_npt / (100 * dt.value_in_unit(unit.picoseconds))))
+
+elapsed = time.time() - start_time
+estimated_100ns = elapsed * (100_000 / time_npt)  # 100,000 ps = 100 ns
+eta = str(datetime.timedelta(seconds=int(estimated_100ns)))   # ETA will be printed at the last
 
 # ---------------
 # Final output
@@ -187,3 +196,5 @@ print(f"  - {args.output}.pdb")
 print(f"  - {args.output}.xml")
 print(f"  - {args.output}.chk")
 
+print()
+print("[INFO] Estimated time for 100 ns simulation (based on NPT performance):", eta)
