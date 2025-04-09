@@ -12,7 +12,7 @@ A lightweight, modular Python-based workflow for running molecular dynamics (MD)
 ```bash
 conda create -n openmm python=3.10
 conda activate openmm
-conda install -c conda-forge openmm openff-toolkit rdkit mdtraj pytraj tqdm
+conda install -c conda-forge openmm openff-toolkit rdkit mdtraj tqdm
 ```
 
 ---

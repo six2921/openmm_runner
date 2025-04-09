@@ -11,7 +11,7 @@ from openmm import unit, XmlSerializer, LangevinIntegrator
 from tqdm import tqdm
 from openmm.app import StateDataReporter, DCDReporter
 from pprint import pprint
-from helpers import print_block, parse_time_data, extract_stats
+from helpers import parse_time_data, extract_stats
 from constants import integrator_config, forcefield_config, system_config
 from reporter import items_energy, items_time
 
