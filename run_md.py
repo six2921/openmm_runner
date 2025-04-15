@@ -14,6 +14,7 @@ from pprint import pprint
 from helpers import parse_time_data, extract_stats
 from constants import integrator_config, forcefield_config, system_config
 from reporter import items_energy, items_time
+from openmmplumed import PlumedForce  # [ADDED] support for PLUMED
 
 # --------------------------
 # Argument Parsing
@@ -24,6 +25,7 @@ parser.add_argument("mode", choices=["run", "append"], help="Mode to start a new
 parser.add_argument("-p", "--prev", required=True, help="Prefix of input files: expects .chk, .pdb, .xml (and .log/.time/.dcd/.json for append)")
 parser.add_argument("-o", "--output", required=True, help="Base name for output files")
 parser.add_argument("-t", "--time", type=float, required=True, help="Simulation time in nanoseconds")
+parser.add_argument("--cv", type=str, help="PLUMED input file for metadynamics")  # [ADDED] --cv option
 parser.add_argument("--overwrite", action="store_true", help="Allow overwriting output files if they exist")
 args = parser.parse_args()
 
@@ -111,13 +113,22 @@ with open(chk_file, "rb") as f:
     chk_data = f.read()
 
 # --------------------------
+# Load PLUMED CV if provided
+# --------------------------
+if args.cv:  # [ADDED]
+    with open(args.cv) as f:
+        plumed_script = f.read()
+    print("[INFO] Adding PLUMED metadynamics force...")
+    system.addForce(PlumedForce(plumed_script))
+
+# --------------------------
 # Set steps_interval and total_steps
 # --------------------------
 
 dt_ps = dt.value_in_unit(unit.picoseconds)
 
 if args.mode == "run":
-    report_interval_ps = 10 if args.time < 100 else 50
+    report_interval_ps = 10 if args.time < 100 else 100
     steps_interval = int(report_interval_ps / dt_ps)
 elif args.mode == "append":
     with open(f"{input_prefix}.json") as f:
@@ -182,7 +193,8 @@ common_config = {
     "total_steps": total_steps,
     "steps_interval": steps_interval,
     "steps_interval_ps": report_interval_ps,
-    "started": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    "started": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    "mode": args.mode + ("+plumed" if args.cv else "")  # [MODIFIED] add +plumed tag
 }
 
 # 2. If append mode, calculate run extension values and expand config
@@ -240,4 +252,3 @@ print(f"  - {log_file}       # Energy log")
 print(f"  - {time_file}      # Progress log")
 print(f"  - {out_chk}       # Checkpoint")
 print(f"  - {json_output_file}      # Config")
-

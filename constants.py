@@ -3,8 +3,8 @@ from openmm.app import HBonds
 
 # Integrator settings
 integrator_config = {
-    "dt": 0.002 * unit.picoseconds,
     "temp": 300 * unit.kelvin,
+    "dt": 0.002 * unit.picoseconds,
     "gamma": 1.0 / unit.picosecond
 }
 
@@ -22,7 +22,6 @@ forcefield_config = {
         "constraints": HBonds,
         "rigidWater": True,
         "removeCMMotion": False,
-        "hydrogenMass": 4 * unit.amu
     },
     "small_molecule_ff": "gaff-2.11"
 }
